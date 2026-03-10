@@ -4,52 +4,64 @@ import { createClaudeClient, CLAUDE_MODEL } from '@/lib/claude';
 import { createGmailClient, parseGmailMessage } from '@/lib/gmail';
 import { EMAIL_AGENT_SYSTEM_PROMPT } from '@/config/agent-prompts';
 
-const tools: any[] = [
+const tools = [
   {
-    name: 'search_emails',
-    description: 'Search the user\'s Gmail inbox using Gmail query syntax',
-    input_schema: {
-      type: 'object',
-      properties: {
-        query: { type: 'string', description: 'Gmail search query (e.g., "from:john subject:meeting")' },
-        maxResults: { type: 'number', description: 'Maximum results to return (default 10)' },
+    type: 'function' as const,
+    function: {
+      name: 'search_emails',
+      description: "Search the user's Gmail inbox using Gmail query syntax",
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Gmail search query (e.g., "from:john subject:meeting")' },
+          maxResults: { type: 'number', description: 'Maximum results to return (default 10)' },
+        },
+        required: ['query'],
       },
-      required: ['query'],
     },
   },
   {
-    name: 'get_email',
-    description: 'Get the full content of a specific email by ID',
-    input_schema: {
-      type: 'object',
-      properties: {
-        emailId: { type: 'string', description: 'The email ID' },
+    type: 'function' as const,
+    function: {
+      name: 'get_email',
+      description: 'Get the full content of a specific email by ID',
+      parameters: {
+        type: 'object',
+        properties: {
+          emailId: { type: 'string', description: 'The email ID' },
+        },
+        required: ['emailId'],
       },
-      required: ['emailId'],
     },
   },
   {
-    name: 'draft_reply',
-    description: 'Create a draft reply to an email',
-    input_schema: {
-      type: 'object',
-      properties: {
-        emailId: { type: 'string', description: 'The email ID to reply to' },
-        body: { type: 'string', description: 'The reply body in HTML' },
-        tone: { type: 'string', enum: ['formal', 'casual', 'brief'], description: 'Tone of the reply' },
+    type: 'function' as const,
+    function: {
+      name: 'draft_reply',
+      description: 'Create a draft reply to an email',
+      parameters: {
+        type: 'object',
+        properties: {
+          emailId: { type: 'string', description: 'The email ID to reply to' },
+          body: { type: 'string', description: 'The reply body in HTML' },
+          tone: { type: 'string', enum: ['formal', 'casual', 'brief'], description: 'Tone of the reply' },
+        },
+        required: ['emailId', 'body'],
       },
-      required: ['emailId', 'body'],
     },
   },
   {
-    name: 'archive_email',
-    description: 'Archive an email (remove from inbox)',
-    input_schema: {
-      type: 'object',
-      properties: {
-        emailId: { type: 'string', description: 'The email ID to archive' },
+    type: 'function' as const,
+    function: {
+      name: 'archive_email',
+      description: 'Archive an email (remove from inbox)',
+      parameters: {
+        type: 'object',
+        properties: {
+          emailId: { type: 'string', description: 'The email ID to archive' },
+        },
+        required: ['emailId'],
       },
-      required: ['emailId'],
     },
   },
 ];
@@ -78,7 +90,7 @@ async function executeToolCall(
           });
           return {
             id: detail.data.id,
-            snippet: detail.data.snippet,
+            snippet: (detail.data.snippet ?? '').replace(/&#(\d+);/g, (_: string, c: string) => String.fromCharCode(parseInt(c, 10))).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
             from: detail.data.payload?.headers?.find((h) => h.name === 'From')?.value,
             subject: detail.data.payload?.headers?.find((h) => h.name === 'Subject')?.value,
             date: detail.data.payload?.headers?.find((h) => h.name === 'Date')?.value,
@@ -168,19 +180,18 @@ export async function POST(request: NextRequest) {
     }
 
     const { messages, context } = await request.json();
-    const claude = createClaudeClient();
+    const openai = createClaudeClient();
     const accessToken = session.accessToken as string;
 
-    let claudeMessages = messages.map((m: any) => ({
-      role: m.role,
-      content: m.content,
-    }));
-
-    // Build system prompt with context
-    let systemPrompt = EMAIL_AGENT_SYSTEM_PROMPT;
+    let systemPrompt = EMAIL_AGENT_SYSTEM_PROMPT.replace('{{TODAY}}', new Date().toISOString().split('T')[0]);
     if (context?.emailId) {
       systemPrompt += `\n\nThe user is currently viewing email ID: ${context.emailId}.`;
     }
+
+    let claudeMessages: any[] = [
+      { role: 'system', content: systemPrompt },
+      ...messages.map((m: any) => ({ role: m.role, content: m.content })),
+    ];
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -189,95 +200,83 @@ export async function POST(request: NextRequest) {
           let continueLoop = true;
 
           while (continueLoop) {
-            const response = await claude.messages.create({
+            const response = await openai.chat.completions.create({
               model: CLAUDE_MODEL,
               max_tokens: 4096,
-              system: systemPrompt,
               messages: claudeMessages,
               tools,
               stream: true,
             });
 
-            let currentToolUse: { id: string; name: string; input: string } | null = null;
-            let hasToolUse = false;
-            const toolResults: any[] = [];
+            const pendingToolCalls: Record<number, { id: string; name: string; arguments: string }> = {};
+            let finishReason = '';
 
-            for await (const event of response) {
-              if (event.type === 'content_block_start') {
-                if (event.content_block.type === 'text') {
-                  // Text block starting
-                } else if (event.content_block.type === 'tool_use') {
-                  hasToolUse = true;
-                  currentToolUse = {
-                    id: event.content_block.id,
-                    name: event.content_block.name,
-                    input: '',
-                  };
-                }
-              } else if (event.type === 'content_block_delta') {
-                if (event.delta.type === 'text_delta') {
-                  controller.enqueue(
-                    encoder.encode(`data: ${JSON.stringify({ content: event.delta.text })}\n\n`)
-                  );
-                } else if (event.delta.type === 'input_json_delta' && currentToolUse) {
-                  currentToolUse.input += event.delta.partial_json;
-                }
-              } else if (event.type === 'content_block_stop') {
-                if (currentToolUse) {
-                  // Send tool call notification
-                  controller.enqueue(
-                    encoder.encode(
-                      `data: ${JSON.stringify({
-                        toolCall: {
-                          name: currentToolUse.name,
-                          input: JSON.parse(currentToolUse.input || '{}'),
-                        },
-                      })}\n\n`
-                    )
-                  );
+            for await (const chunk of response) {
+              const delta = chunk.choices[0]?.delta;
+              const finish = chunk.choices[0]?.finish_reason;
+              if (finish) finishReason = finish;
 
-                  // Execute the tool
-                  const result = await executeToolCall(
-                    currentToolUse.name,
-                    JSON.parse(currentToolUse.input || '{}'),
-                    accessToken
-                  );
+              if (delta?.content) {
+                controller.enqueue(
+                  encoder.encode(`data: ${JSON.stringify({ content: delta.content })}\n\n`)
+                );
+              }
 
-                  toolResults.push({
-                    toolUseId: currentToolUse.id,
-                    name: currentToolUse.name,
-                    result,
-                  });
-
-                  currentToolUse = null;
+              if (delta?.tool_calls) {
+                for (const tc of delta.tool_calls) {
+                  const idx = tc.index;
+                  if (!pendingToolCalls[idx]) {
+                    pendingToolCalls[idx] = { id: '', name: '', arguments: '' };
+                  }
+                  if (tc.id) pendingToolCalls[idx].id = tc.id;
+                  if (tc.function?.name) pendingToolCalls[idx].name = tc.function.name;
+                  if (tc.function?.arguments) pendingToolCalls[idx].arguments += tc.function.arguments;
                 }
               }
             }
 
-            if (hasToolUse && toolResults.length > 0) {
-              // Add assistant response and tool results to continue the conversation
-              const assistantContent: any[] = [];
-              // We need to reconstruct the assistant message with tool_use blocks
-              for (const tr of toolResults) {
-                assistantContent.push({
-                  type: 'tool_use',
-                  id: tr.toolUseId,
-                  name: tr.name,
-                  input: JSON.parse(tr.result).error ? {} : JSON.parse(tr.result),
-                });
+            if (finishReason === 'tool_calls' && Object.keys(pendingToolCalls).length > 0) {
+              const toolCallList = Object.values(pendingToolCalls);
+              const toolResults: { id: string; result: string }[] = [];
+
+              for (const tc of toolCallList) {
+                const input = JSON.parse(tc.arguments || '{}');
+
+                controller.enqueue(
+                  encoder.encode(
+                    `data: ${JSON.stringify({ toolCall: { name: tc.name, input } })}\n\n`
+                  )
+                );
+
+                const result = await executeToolCall(tc.name, input, accessToken);
+                toolResults.push({ id: tc.id, result });
+
+                // Stream email results to client for UI preview cards
+                if (tc.name === 'search_emails') {
+                  try {
+                    const emails = JSON.parse(result);
+                    controller.enqueue(
+                      encoder.encode(`data: ${JSON.stringify({ emailResults: emails })}\n\n`)
+                    );
+                  } catch { /* ignore parse errors */ }
+                }
               }
 
               claudeMessages = [
                 ...claudeMessages,
-                { role: 'assistant', content: assistantContent },
                 {
-                  role: 'user',
-                  content: toolResults.map((tr) => ({
-                    type: 'tool_result',
-                    tool_use_id: tr.toolUseId,
-                    content: tr.result,
+                  role: 'assistant',
+                  tool_calls: toolCallList.map((tc) => ({
+                    id: tc.id,
+                    type: 'function',
+                    function: { name: tc.name, arguments: tc.arguments },
                   })),
                 },
+                ...toolResults.map((tr) => ({
+                  role: 'tool',
+                  tool_call_id: tr.id,
+                  content: tr.result,
+                })),
               ];
             } else {
               continueLoop = false;

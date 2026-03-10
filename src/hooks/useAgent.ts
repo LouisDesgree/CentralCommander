@@ -3,14 +3,17 @@
 import { useCallback } from 'react';
 import { useAgentStore } from '@/stores/agentStore';
 import { generateId } from '@/lib/utils';
-import type { AgentChatRequest } from '@/types/agent';
+import type { AgentChatRequest, EmailPreview } from '@/types/agent';
 
 export function useAgent() {
-  const { messages, isStreaming, addMessage, updateLastMessage, setStreaming, clearMessages } =
+  const { messages, isStreaming, addMessage, updateLastMessage, updateLastMessagePreviews, setStreaming, clearMessages } =
     useAgentStore();
 
   const sendMessage = useCallback(
     async (content: string, context?: AgentChatRequest['context']) => {
+      // Use getState() to avoid stale closure — always read latest messages
+      const currentMessages = useAgentStore.getState().messages;
+
       const userMessage = {
         id: generateId(),
         role: 'user' as const,
@@ -30,7 +33,7 @@ export function useAgent() {
       setStreaming(true);
 
       try {
-        const allMessages = [...messages, userMessage].map((m) => ({
+        const allMessages = [...currentMessages, userMessage].map((m) => ({
           role: m.role,
           content: m.content,
         }));
@@ -46,6 +49,7 @@ export function useAgent() {
         const reader = response.body?.getReader();
         const decoder = new TextDecoder();
         let accumulated = '';
+        const collectedEmails: EmailPreview[] = [];
 
         if (reader) {
           while (true) {
@@ -65,12 +69,27 @@ export function useAgent() {
                     accumulated += parsed.content;
                     updateLastMessage(accumulated);
                   }
+                  if (parsed.emailResults && Array.isArray(parsed.emailResults)) {
+                    for (const e of parsed.emailResults) {
+                      collectedEmails.push({
+                        id: e.id,
+                        from: e.from ?? '',
+                        subject: e.subject ?? '(No Subject)',
+                        snippet: e.snippet ?? '',
+                        date: e.date ?? '',
+                      });
+                    }
+                  }
                 } catch {
                   // Skip invalid JSON
                 }
               }
             }
           }
+        }
+
+        if (collectedEmails.length > 0) {
+          updateLastMessagePreviews(collectedEmails);
         }
       } catch (error) {
         updateLastMessage('An error occurred. Please try again.');
@@ -79,7 +98,7 @@ export function useAgent() {
         setStreaming(false);
       }
     },
-    [messages, addMessage, updateLastMessage, setStreaming]
+    [addMessage, updateLastMessage, updateLastMessagePreviews, setStreaming]
   );
 
   return {

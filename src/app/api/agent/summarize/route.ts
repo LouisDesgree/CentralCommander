@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
     const email = parseGmailMessage(message.data);
     const emailContent = email.body.text || email.body.html;
 
-    const claude = createClaudeClient();
-    const response = await claude.messages.create({
+    const openai = createClaudeClient();
+    const response = await openai.chat.completions.create({
       model: CLAUDE_MODEL,
       max_tokens: 1024,
       messages: [
@@ -42,8 +42,7 @@ Respond in JSON format: { "summary": "...", "actionItems": ["..."], "priority": 
       ],
     });
 
-    const textContent = response.content.find((c) => c.type === 'text');
-    const parsed = JSON.parse(textContent?.text ?? '{}');
+    const parsed = JSON.parse(response.choices[0].message.content ?? '{}');
 
     return NextResponse.json(parsed);
   } catch (error) {

@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --glass-bg: 255 255 255;
+    --glass-bg-opacity: 0.6;
+    --glass-bg-elevated: 0.7;
+    --glass-bg-sunken: 0.4;
+    --glass-border: 255 255 255;
+    --glass-border-opacity: 0.2;
+    --glass-shadow: 0 0 0;
+    --glass-shadow-opacity: 0.05;
+
+    --accent-primary: 217 91% 60%;
+    --accent-primary-hover: 217 91% 55%;
+    --accent-secondary: 262 83% 58%;
+    --accent-tertiary: 173 80% 40%;
+
+    --text-primary: 0 0% 9%;
+    --text-secondary: 0 0% 40%;
+    --text-tertiary: 0 0% 60%;
+    --text-quaternary: 0 0% 75%;
+
+    --bg-primary: 220 20% 97%;
+    --bg-secondary: 220 15% 94%;
+    --bg-tertiary: 220 10% 90%;
+
+    --status-success: 142 71% 45%;
+    --status-warning: 38 92% 50%;
+    --status-error: 0 84% 60%;
+    --status-info: 199 89% 48%;
+  }
+
+  .dark {
+    --glass-bg: 255 255 255;
+    --glass-bg-opacity: 0.08;
+    --glass-bg-elevated: 0.12;
+    --glass-bg-sunken: 0.05;
+    --glass-border: 255 255 255;
+    --glass-border-opacity: 0.12;
+    --glass-shadow: 0 0 0;
+    --glass-shadow-opacity: 0.3;
+
+    --text-primary: 0 0% 98%;
+    --text-secondary: 0 0% 70%;
+    --text-tertiary: 0 0% 50%;
+    --text-quaternary: 0 0% 35%;
+
+    --bg-primary: 225 15% 8%;
+    --bg-secondary: 225 12% 12%;
+    --bg-tertiary: 225 10% 16%;
+
+    --status-success: 142 76% 50%;
+    --status-warning: 38 95% 55%;
+    --status-error: 0 90% 65%;
+    --status-info: 199 95% 55%;
+  }
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-[hsl(var(--bg-primary))] text-[hsl(var(--text-primary))];
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+    min-height: 100dvh;
+    overscroll-behavior: none;
+  }
+
+  * {
+    @apply border-white/10;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .text-balance {
+    text-wrap: balance;
+  }
+}

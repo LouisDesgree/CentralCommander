@@ -20,7 +20,7 @@ export function AgentChat() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-7rem)]">
-      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 py-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 pt-4 pb-36">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full px-4">
             <div className="w-20 h-20 rounded-3xl bg-purple-500/10 flex items-center justify-center mb-4">

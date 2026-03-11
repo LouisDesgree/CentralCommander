@@ -1,7 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/cn';
-import { Sparkles, Inbox, AlertTriangle, PenLine } from 'lucide-react';
+import { Inbox, AlertTriangle, PenLine, FolderKanban, CheckSquare, Pen } from 'lucide-react';
 
 interface AgentSuggestionChipsProps {
   onSelect: (suggestion: string) => void;
@@ -10,8 +10,10 @@ interface AgentSuggestionChipsProps {
 const suggestions = [
   { label: 'Summarize inbox', icon: Inbox, prompt: 'Summarize my recent inbox emails' },
   { label: "What's urgent?", icon: AlertTriangle, prompt: 'Find urgent emails that need my immediate attention' },
+  { label: 'Extract tasks', icon: CheckSquare, prompt: 'Find my latest email and extract action items from it' },
+  { label: 'Organize emails', icon: FolderKanban, prompt: 'Help me organize my recent emails into workspaces' },
+  { label: 'Write for me', icon: Pen, prompt: 'Learn my writing style and draft an email for me' },
   { label: 'Draft reply', icon: PenLine, prompt: 'Help me draft a reply to my latest email' },
-  { label: 'Categorize', icon: Sparkles, prompt: 'Categorize my unread emails' },
 ];
 
 export function AgentSuggestionChips({ onSelect }: AgentSuggestionChipsProps) {

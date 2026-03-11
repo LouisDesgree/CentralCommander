@@ -2,12 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import { GlassCard } from '@/components/ui/GlassCard';
-import { Inbox, AlertTriangle, Trash2, PenLine } from 'lucide-react';
+import { Inbox, CheckSquare, FolderKanban, PenLine } from 'lucide-react';
 
 const actions = [
   { label: 'Summarize Inbox', icon: Inbox, href: '/agent', color: 'text-blue-500' },
-  { label: 'Find Urgent', icon: AlertTriangle, href: '/agent', color: 'text-amber-500' },
-  { label: 'Clean Up', icon: Trash2, href: '/agent', color: 'text-red-400' },
+  { label: 'Tasks', icon: CheckSquare, href: '/tasks', color: 'text-amber-500' },
+  { label: 'Spaces', icon: FolderKanban, href: '/workspaces', color: 'text-purple-500' },
   { label: 'New Email', icon: PenLine, href: '/email/compose', color: 'text-green-500' },
 ];
 

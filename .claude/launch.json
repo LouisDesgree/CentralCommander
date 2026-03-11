@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "next-dev",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["node_modules/next/dist/bin/next", "dev"],
+      "runtimeExecutable": "cmd.exe",
+      "runtimeArgs": ["/c", "start-dev.cmd"],
       "port": 3000
     }
   ]

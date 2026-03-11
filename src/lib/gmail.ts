@@ -77,7 +77,7 @@ export function parseGmailMessage(message: any): Email {
     cc,
     bcc: [],
     subject: getHeader(headers, 'Subject') || '(No Subject)',
-    snippet: message.snippet ?? '',
+    snippet: (message.snippet ?? '').replace(/&#(\d+);/g, (_: string, code: string) => String.fromCharCode(parseInt(code, 10))).replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'"),
     body,
     date: new Date(parseInt(message.internalDate, 10)).toISOString(),
     labels,

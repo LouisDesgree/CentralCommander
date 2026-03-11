@@ -1,9 +1,9 @@
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
 export function createClaudeClient() {
-  return new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
   });
 }
 
-export const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+export const CLAUDE_MODEL = 'gpt-4.1';

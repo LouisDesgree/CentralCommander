@@ -5,6 +5,7 @@ import { TopBar } from '@/components/layout/TopBar';
 import { PageTransition } from '@/components/layout/PageTransition';
 import { SummaryCard } from '@/components/dashboard/SummaryCard';
 import { QuickActionsGrid } from '@/components/dashboard/QuickActionsGrid';
+import { RecentTasks } from '@/components/dashboard/RecentTasks';
 import { GlassCard } from '@/components/ui/GlassCard';
 import { Mail, AlertTriangle, Inbox, Calendar } from 'lucide-react';
 
@@ -45,6 +46,8 @@ export default function DashboardPage() {
             <h2 className="text-lg font-semibold mb-3">Quick Actions</h2>
             <QuickActionsGrid />
           </div>
+
+          <RecentTasks />
 
           <GlassCard padding="md" className="space-y-3">
             <h3 className="text-sm font-semibold text-gray-400 uppercase">Recent Activity</h3>

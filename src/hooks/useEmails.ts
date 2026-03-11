@@ -10,7 +10,10 @@ export function useEmails(params?: EmailListParams) {
   if (params?.maxResults) searchParams.set('maxResults', String(params.maxResults));
   if (params?.pageToken) searchParams.set('pageToken', params.pageToken);
   if (params?.query) searchParams.set('q', params.query);
-  if (params?.labelIds?.length) searchParams.set('labelIds', params.labelIds.join(','));
+  // labelIds: undefined = default (API defaults to INBOX), [] = all mail, ['SENT'] = sent, etc.
+  if (params?.labelIds !== undefined) {
+    searchParams.set('labelIds', params.labelIds.join(','));
+  }
 
   const query = searchParams.toString();
   const url = `/api/gmail/messages${query ? `?${query}` : ''}`;

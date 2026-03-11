@@ -27,7 +27,7 @@ export function BottomTabBar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-0.5 w-16 py-1 rounded-xl transition-colors',
+                'flex flex-col items-center justify-center gap-0.5 w-14 py-1 rounded-xl transition-colors',
                 isActive
                   ? 'text-blue-500'
                   : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'

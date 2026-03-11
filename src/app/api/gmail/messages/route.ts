@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
     const maxResults = parseInt(searchParams.get('maxResults') ?? '20', 10);
     const pageToken = searchParams.get('pageToken') ?? undefined;
     const query = searchParams.get('q') ?? undefined;
-    const labelIds = searchParams.get('labelIds')?.split(',') ?? ['INBOX'];
+    const labelIdsParam = searchParams.get('labelIds');
+    const labelIds = labelIdsParam ? labelIdsParam.split(',').filter(Boolean) : ['INBOX'];
 
     const gmail = createGmailClient(session.accessToken as string);
 
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
       maxResults,
       pageToken,
       q: query,
-      labelIds,
+      ...(labelIds.length > 0 ? { labelIds } : {}),
     });
 
     const messageIds = listResponse.data.messages ?? [];

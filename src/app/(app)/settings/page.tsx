@@ -8,7 +8,8 @@ import { Avatar } from '@/components/ui/Avatar';
 import { Button } from '@/components/ui/Button';
 import { StatusDot } from '@/components/ui/StatusDot';
 import { ThemeToggle } from '@/components/settings/ThemeToggle';
-import { Mail, LogOut, Palette, Link2, Info } from 'lucide-react';
+import { WritingStyleCard } from '@/components/style/WritingStyleCard';
+import { Mail, LogOut, Palette, Link2, Info, Pen } from 'lucide-react';
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -60,6 +61,15 @@ export default function SettingsPage() {
               </div>
               <StatusDot color="green" pulse />
             </GlassCard>
+          </div>
+
+          {/* Writing Style */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+              <Pen className="w-4 h-4 text-gray-400" />
+              <h3 className="text-sm font-medium text-gray-400 uppercase">Writing Style</h3>
+            </div>
+            <WritingStyleCard />
           </div>
 
           {/* About */}

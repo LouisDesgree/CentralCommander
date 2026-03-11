@@ -17,7 +17,7 @@ export function TopBar({ title, showBack = false, trailing, className }: TopBarP
   return (
     <header
       className={cn(
-        'sticky top-0 z-40',
+        'sticky top-0 z-30',
         'bg-white/70 dark:bg-gray-900/70 backdrop-blur-2xl',
         'border-b border-white/20 dark:border-white/10',
         'pt-[env(safe-area-inset-top,0px)]',

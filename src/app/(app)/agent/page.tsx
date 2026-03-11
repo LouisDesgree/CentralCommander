@@ -5,6 +5,7 @@ import { PageTransition } from '@/components/layout/PageTransition';
 import { AgentChat } from '@/components/agent/AgentChat';
 import { Trash2 } from 'lucide-react';
 import { useAgentStore } from '@/stores/agentStore';
+import { ParticleField } from '@/components/ui/ParticleField';
 
 export default function AgentPage() {
   const clearMessages = useAgentStore((s) => s.clearMessages);
@@ -23,7 +24,12 @@ export default function AgentPage() {
         }
       />
       <PageTransition>
-        <AgentChat />
+        <div className="relative">
+          <ParticleField count={20} maxOpacity={0.12} speed={0.1} />
+          <div className="relative z-10">
+            <AgentChat />
+          </div>
+        </div>
       </PageTransition>
     </>
   );

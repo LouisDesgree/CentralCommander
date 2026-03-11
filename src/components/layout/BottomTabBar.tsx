@@ -11,15 +11,15 @@ export function BottomTabBar() {
   return (
     <nav
       className={cn(
-        'fixed bottom-0 inset-x-0 z-50',
-        'bg-white/70 dark:bg-gray-900/70 backdrop-blur-2xl',
+        'fixed bottom-0 inset-x-0 z-30',
+        'bg-white/75 dark:bg-gray-900/75 backdrop-blur-2xl',
         'border-t border-white/20 dark:border-white/10',
         'pb-[env(safe-area-inset-bottom,0px)]'
       )}
     >
-      <div className="flex items-center justify-around h-14">
+      <div className="flex items-stretch h-14">
         {navigationItems.map((item) => {
-          const isActive = pathname.startsWith(item.href);
+          const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
           const Icon = item.icon;
 
           return (
@@ -27,7 +27,8 @@ export function BottomTabBar() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-0.5 w-16 py-1 rounded-xl transition-colors',
+                'flex flex-col items-center justify-center gap-0.5 flex-1 py-1',
+                'transition-colors duration-150',
                 isActive
                   ? 'text-blue-500'
                   : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'
@@ -35,13 +36,23 @@ export function BottomTabBar() {
             >
               <div
                 className={cn(
-                  'flex items-center justify-center w-8 h-8 rounded-xl transition-colors',
+                  'flex items-center justify-center w-8 h-7 rounded-xl transition-all duration-200',
                   isActive && 'bg-blue-500/10'
                 )}
               >
-                <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
+                <Icon
+                  className="w-[19px] h-[19px]"
+                  strokeWidth={isActive ? 2.5 : 1.75}
+                />
               </div>
-              <span className="text-[10px] font-medium">{item.label}</span>
+              <span
+                className={cn(
+                  'text-[10px] font-medium leading-none transition-colors',
+                  isActive ? 'text-blue-500' : 'text-gray-400 dark:text-gray-500'
+                )}
+              >
+                {item.label}
+              </span>
             </Link>
           );
         })}
